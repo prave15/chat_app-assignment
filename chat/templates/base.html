@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="{% url 'home' %}">Chat-App</a>
+    </nav>
+
+
+    <div class="container">
+        <div class="left-menu" id="leftMenu">
+            {% block leftContent %}
+            {% endblock %}
+        </div>
+
+        <main class="main-content">
+            {% block content %}
+            {% endblock %}
+        </main>
+
+        <div class="right-panel">
+           
+        </div>
+    </div>
+
+    
+    <footer class="footer">
+        <p>© 2025 Chat Application. All rights reserved.</p>
+    </footer>
+    
+    {% block javascript %}
+
+    {% endblock %}
+
+    
+    
+</body>
+</html>

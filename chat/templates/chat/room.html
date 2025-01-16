@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block leftContent %}
+
+<div class="users-menu" id="usersMenu">
+    <button class="toggle-users" onclick="toggleUsers()">☰ Users</button>
+    <div class="users-list">
+        {% for user in users %}
+        <a href="{% url 'chat_room' username=user.username %}" 
+           class="user-item {% if user == other_user %}active{% endif %}">
+            {{ user.username }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="chat-container">
+
+    <!-- Chat Area -->
+    <div class="chat-area">
+        <div class="chat-header">
+            <h2>Chat with {{ other_user.username }}</h2>
+        </div>
+
+        <div class="messages" id="messageContainer">
+            {% for message in messages %}
+            <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+                <span class="message-content">{{ message.message }}</span>
+                <span class="timestamp">{{ message.timestamp|date:"H:i" }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="message-input">
+            <input type="text" id="messageInput" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascript %}
+<script>
+    // Initialize WebSocket with connection management
+let chatSocket = null;
+
+function connectWebSocket() {
+    // Determine WebSocket protocol (ws or wss)
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    
+    // Create the WebSocket URL - using current URL path to get the chat room name
+    const pathParts = window.location.pathname.split('/');
+    const username = pathParts[pathParts.length - 2]; // Get username from URL
+    
+    const wsUrl = wsProtocol + window.location.host + '/ws/chat/' + username + '/';
+    console.log('Connecting to WebSocket:', wsUrl); // Debug log
+    
+    chatSocket = new WebSocket(wsUrl);
+
+    chatSocket.onopen = function(e) {
+        console.log('WebSocket connection established');
+    };
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        addMessage(data.message, data.sender === '{{ request.user.username }}');
+        scrollToBottom();
+    };
+
+    chatSocket.onclose = function(e) {
+        console.log('WebSocket connection closed. Attempting to reconnect...');
+        setTimeout(connectWebSocket, 1000); // Try to reconnect after 1 second
+    };
+
+    chatSocket.onerror = function(e) {
+        console.error('WebSocket error:', e);
+    };
+}
+
+function sendMessage() {
+    const messageInput = document.getElementById('messageInput');
+    const message = messageInput.value.trim();
+    
+    if (message && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+        // Show message immediately in UI
+        addMessage(message, true);
+        scrollToBottom();
+        
+        chatSocket.send(JSON.stringify({
+            'message': message,
+            'receiver_id': '{{ other_user.id }}'
+        }));
+        messageInput.value = '';
+    } else if (!message) {
+        console.log('Empty message');
+    } else {
+        console.log('WebSocket is not connected');
+        connectWebSocket(); // Try to reconnect
+    }
+}
+
+function addMessage(message, isSent) {
+    const messageContainer = document.getElementById('messageContainer');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+    
+    const currentTime = new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    // Escape HTML to prevent XSS
+    const escapedMessage = message
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    
+    messageDiv.innerHTML = `
+        <span class="message-content">${escapedMessage}</span>
+        <span class="timestamp">${currentTime}</span>
+    `;
+    
+    messageContainer.appendChild(messageDiv);
+}
+
+function scrollToBottom() {
+    const messageContainer = document.getElementById('messageContainer');
+    messageContainer.scrollTop = messageContainer.scrollHeight;
+}
+
+function toggleUsers() {
+    document.querySelector('.users-menu').classList.toggle('collapsed');
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize WebSocket connection
+    connectWebSocket();
+    
+    // Add event listeners
+    document.getElementById('messageInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Add click event for send button if it exists
+    const sendButton = document.getElementById('sendButton');
+    if (sendButton) {
+        sendButton.addEventListener('click', sendMessage);
+    }
+    
+    // Initial scroll to bottom
+    scrollToBottom();
+});
+</script>
+
+
+{% endblock %}
