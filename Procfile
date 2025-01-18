@@ -1,1 +1,1 @@
-web: daphne your_project.asgi:application -b 0.0.0.0 -p $PORT
+web: daphne chat_app.asgi:application -b 0.0.0.0 -p $PORT
