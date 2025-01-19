@@ -63,8 +63,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-WSGI_APPLICATION = 'chat_app.wsgi.application'
+
 ASGI_APPLICATION = 'chat_app.asgi.application'
+WSGI_APPLICATION = 'chat_app.wsgi.application'
 
 ROOT_URLCONF = 'chat_app.urls'
 
@@ -103,7 +104,7 @@ else:
         default=os.getenv('DATABASE_URL'),
         conn_max_age=600,
         conn_health_checks=True,
-    )
+        )
     }
     
 CHANNEL_LAYERS = {
