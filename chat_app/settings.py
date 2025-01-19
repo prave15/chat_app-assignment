@@ -32,8 +32,18 @@ SECRET_KEY = 'django-insecure-0b+!z!2w!^4ipyc=8fw-wctkdi&8c8qy!8f=$h%k0*@$7w9&%k
 DEBUG = True
 
 
-ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://chatapp-assignment-production.up.railway.app']
+ALLOWED_HOSTS = [
+    'chatapp-assignment-production.up.railway.app',
+    '.railway.app',
+    'localhost',
+    '127.0.0.1'
+]
+
+# Also add it to CSRF trusted origins
+CSRF_TRUSTED_ORIGINS = [
+    'https://chatapp-assignment-production.up.railway.app',
+    'https://*.railway.app'
+]
 
 
 
